@@ -1,56 +1,55 @@
-const Banner = require('../models/banner')
+const Address = require('../models/address')
 
-const getBanner = async (req, res) => {
+const getAddress = async (req, res) => {
   try {
-    const data = await Banner.find()
+    const { _id } = req.decoded
+    const data = await Address.find({ userId:_id })
     res.status(200).json({ data })
   } catch (error) {
     console.log(error);
+    return res.status(500).json({ message: err?.message ?? 'Something went wrong' })
   }
 };
 
-const addBanner = async (req, res) => {
-  const { title, subtitle,url , desc } = req?.body
-  const image = req?.file?.filename
+const addAddress = async (req, res) => {
+  const { userId, firstname, lastname, country, address_line_1, address_line_2, city, state, zip, mobile, primary } = req?.body
   try {
-    let arr = []
-    const BannerData = await Banner.find()
-    BannerData.map(x => {
-      arr.push(x?.name?.toUpperCase())
+    const data = await Address.create({
+      userId, firstname, lastname, country, address_line_1, address_line_2, city, state, zip, mobile, primary
     })
-    const Banner = name.toUpperCase()
-    const isExisting = arr.findIndex(x => x == Banner)
-    if (isExisting === -1) {
-      const cat = new Banner({ name, desc, image })
-      await cat.save()
-      res.status(201).json({ data: cat, message: 'Banner created successfully' });
-    } else {
-      return res.status(400).json({ message: 'Banner already exists' })
-    }
+    res.status(201).json({ data, message: 'Address created successfully' });
   } catch (error) {
     console.log(error);
+    return res.status(500).json({ message: err?.message ?? 'Something went wrong' })
   }
 }
 
-const deleteBanner = async (req, res) => {
+const updateAddress = async (req, res) => {
+  const { _id, firstname, lastname, country, address_line_1, address_line_2, city, state, zip, mobile, primary } = req?.body
   try {
-    const id = req.query.id
-    const data = await Banner.deleteOne({ _id: id });
-    fs.unlink(`public/uploads/${data?.image}`, (err) => {
-      if (err) {
-        console.error('Error deleting image:', err);
-        return;
-      }
-      console.log('Image deleted successfully.');
-    });
-    res.status(200).json({ message: 'Banner deleted successfully' });
+    const data = await Address.updateOne({ _id },
+      { $set: { firstname, lastname, country, address_line_1, address_line_2, city, state, zip, mobile, primary }})
+    res.status(201).json({ data, message: 'Address updated successfully' });
   } catch (error) {
     console.log(error);
+    return res.status(500).json({ message: err?.message ?? 'Something went wrong' })
+  }
+}
+
+const deleteAddress = async (req, res) => {
+  try {
+    const id = req.params.id
+    await Address.deleteOne({ _id: id });
+    res.status(200).json({ message: 'Address deleted successfully' });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ message: err?.message ?? 'Something went wrong' })
   }
 }
 
 module.exports = {
-    getBanner,
-    addBanner,
-    deleteBanner,
+    getAddress,
+    addAddress,
+    updateAddress,
+    deleteAddress,
   }

@@ -6,24 +6,23 @@ const getBanners = async (req, res) => {
     res.status(200).json({ data })
   } catch (error) {
     console.log(error);
+    return res.status(500).json({ message: err?.message ?? 'Something went wrong' })
   }
 };
 
 const addBanner = async (req, res) => {
-  console.log(req)
-  const { title, subtitle } = req?.body
-  const imgUrl = req?.file?.filename
   try {
-   
-     
-    
-     
-      const ban = new Banner({title, subtitle, imgUrl })
-      await ban.save()
-      res.status(201).json({ data: ban, message: 'banner created successfully' });
-     
+    const { title, subtitle, url, description } = req?.body
+    const image = req?.file?.filename
+    if (!image) {
+      return res.status(404).json({ message: 'Image not found' });
+    }
+    const data = new Banner({ title, subtitle, url, image, description })
+    await data.save()
+    res.status(201).json({ data, message: 'banner created successfully' });
   } catch (error) {
     console.log(error);
+    return res.status(500).json({ message: err?.message ?? 'Something went wrong' })
   }
 }
 
@@ -37,55 +36,53 @@ const addBanner = async (req, res) => {
     res.status(200).json({ data: banner });
   } catch (error) {
     console.log(error);
-    res.status(500).json({ message: 'An error occurred', error });
+    return res.status(500).json({ message: err?.message ?? 'Something went wrong' })
   }
-
-
 }
 
-const deleteBannerById = async (req, res) => {
-  const { id } = req.params;
+const updateBanner = async (req, res) => {
+  const { _id, title, subtitle, url, description } = req.body;
+  const image = req.file?.filename;
   try {
-    const banner = await Banner.findByIdAndDelete(id);
-    if (!banner) {
+    const data = await Banner.findById(_id);
+    if (!data) {
       return res.status(404).json({ message: 'Banner not found' });
     }
+    await Banner.updateOne({ _id }, {
+      $set: { title, subtitle, url, description, ...(image && { image }) }
+    })
+    res.status(200).json({ data, message: 'Banner updated successfully' });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ message: err?.message ?? 'Something went wrong' })
+  }
+};
+
+const deleteBanner = async (req, res) => {
+  const { id } = req.params;
+  try {
+    const data = await Banner.findByIdAndDelete(id);
+    if (!data) {
+      return res.status(404).json({ message: 'Banner not found' });
+    }
+    fs.unlink(`public/uploads/${data?.image}`, (err) => {
+      if (err) {
+        console.error('Error deleting image:', err);
+        return;
+      }
+      console.log('Image deleted successfully.');
+    });
     res.status(200).json({ message: 'Banner deleted successfully' });
   } catch (error) {
     console.log(error);
-    res.status(500).json({ message: 'An error occurred', error });
+    return res.status(500).json({ message: err?.message ?? 'Something went wrong' })
   }
 };
-
-const updateBannerById = async (req, res) => {
-  const { id } = req.params;
-  const { title, subtitle } = req.body;
-  const imgUrl = req.file?.filename;
-
-  try {
-    const banner = await Banner.findById(id);
-    if (!banner) {
-      return res.status(404).json({ message: 'Banner not found' });
-    }
-
-    if (title) banner.title = title;
-    if (subtitle) banner.subtitle = subtitle;
-    if (imgUrl) banner.imgUrl = imgUrl;
-
-    await banner.save();
-    res.status(200).json({ data: banner, message: 'Banner updated successfully' });
-  } catch (error) {
-    console.log(error);
-    res.status(500).json({ message: 'An error occurred', error });
-  }
-};
-
 
 module.exports = {
   getBanners,
   addBanner,
-getBannerById,
-deleteBannerById,
-updateBannerById
-
+  getBannerById,
+  updateBanner,
+  deleteBanner
 }
