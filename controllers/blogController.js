@@ -1,9 +1,9 @@
-const Banner = require('../models/banner');
+const Blog = require('../models/blogs');
 const fs = require('fs');
 
-const getBanners = async (req, res) => {
+const getBlogs = async (req, res) => {
   try {
-    const data = await Banner.find()
+    const data = await Blog.find()
     res.status(200).json({ data })
   } catch (error) {
     console.log(error);
@@ -11,43 +11,43 @@ const getBanners = async (req, res) => {
   }
 };
 
-const addBanner = async (req, res) => {
+const addBlog = async (req, res) => {
   try {
     const { title, subtitle, url, description, status } = req?.body
     const image = req?.file?.filename
     if (!image) {
       return res.status(404).json({ message: 'Image not found' });
     }
-    const data = new Banner({ title, subtitle, url, image, description, status })
+    const data = new Blog({ title, subtitle, url, image, description, status })
     await data.save()
-    res.status(201).json({ data, message: 'Banner created successfully' });
+    res.status(201).json({ data, message: 'Blog created successfully' });
   } catch (error) {
     console.log(error);
     return res.status(500).json({ message: error?.message ?? 'Something went wrong' })
   }
 }
 
-const getBannerById = async (req, res) => {
+const getBlogById = async (req, res) => {
   const { id } = req.params;
   try {
-    const banner = await Banner.findById(id);
-    if (!banner) {
-      return res.status(404).json({ message: 'Banner not found' });
+    const blog = await Blog.findById(id);
+    if (!blog) {
+      return res.status(404).json({ message: 'Blog not found' });
     }
-    res.status(200).json({ data: banner });
+    res.status(200).json({ data: blog });
   } catch (error) {
     console.log(error);
     return res.status(500).json({ message: error?.message ?? 'Something went wrong' })
   }
 }
 
-const updateBanner = async (req, res) => {
+const updateBlog = async (req, res) => {
   const { _id, title, subtitle, url, description, status } = req.body;
   const image = req?.file?.filename;
   try {
-    const data = await Banner.findById(_id);
+    const data = await Blog.findById(_id);
     if (!data) {
-      return res.status(404).json({ message: 'Banner not found' });
+      return res.status(404).json({ message: 'Blog not found' });
     }
     if (image) {
       fs.unlink(`public/uploads/${data?.image}`, (err) => {
@@ -58,22 +58,22 @@ const updateBanner = async (req, res) => {
         console.log('Image deleted successfully.');
       });
     }
-    await Banner.updateOne({ _id }, {
+    await Blog.updateOne({ _id }, {
       $set: { title, subtitle, url, description, status, ...(image && { image }) }
     })
-    res.status(200).json({ data, message: 'Banner updated successfully' });
+    res.status(200).json({ data, message: 'Blog updated successfully' });
   } catch (error) {
     console.log(error);
     return res.status(500).json({ message: error?.message ?? 'Something went wrong' })
   }
 };
 
-const deleteBanner = async (req, res) => {
+const deleteBlog = async (req, res) => {
   const { id } = req.params;
   try {
-    const data = await Banner.findByIdAndDelete(id);
+    const data = await Blog.findByIdAndDelete(id);
     if (!data) {
-      return res.status(404).json({ message: 'Banner not found' });
+      return res.status(404).json({ message: 'Blog not found' });
     }
     fs.unlink(`public/uploads/${data?.image}`, (err) => {
       if (err) {
@@ -82,7 +82,7 @@ const deleteBanner = async (req, res) => {
       }
       console.log('Image deleted successfully.');
     });
-    res.status(200).json({ message: 'Banner deleted successfully' });
+    res.status(200).json({ message: 'Blog deleted successfully' });
   } catch (error) {
     console.log(error);
     return res.status(500).json({ message: error?.message ?? 'Something went wrong' })
@@ -90,9 +90,9 @@ const deleteBanner = async (req, res) => {
 };
 
 module.exports = {
-  getBanners,
-  addBanner,
-  getBannerById,
-  updateBanner,
-  deleteBanner
+  getBlogs,
+  addBlog,
+  getBlogById,
+  updateBlog,
+  deleteBlog
 }
